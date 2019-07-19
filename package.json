@@ -1,0 +1,13 @@
+{
+  "name": "gist-exec",
+  "version": "2019.5.8",
+  "description": "execute gist script",
+  "keywords": [
+    "gist"
+  ],
+  "homepage": "https://github.com/looking-for-a-job/gist-exec",
+  "license": "Unlicense",
+  "bin": {
+    "gist-exec": "./scripts/gist-exec"
+  }
+}

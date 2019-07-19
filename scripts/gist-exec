@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+{ set +x; } 2>/dev/null
+
+usage() {
+    echo "usage: $(basename $0) url" 1>&2
+    [[ $1 == "-h" ]] || [[ $1 == "--help" ]]; exit
+}
+
+[[ $1 == "-h" ]] || [[ $1 == "--help" ]] && usage "$@"
+
+[[ $# != 1 ]] && usage
+
+gist_id="$(IFS='/';set $1; set ${@: -1};IFS='#';set $1;echo $1)"
+anchor="$(IFS='/';set $1; set ${@: -1};IFS='#';set $1;echo $2)"
+
+url="https://gist.github.com/$gist_id.git"
+tmp="$(mktemp -d)" || exit
+git clone -q "$url" "$tmp" || exit
+rm -fr "$tmp"/.git
+
+path="$(find "$tmp" -type f)" || exit
+[[ -n "$anchor" ]] && {
+    filename="$(IFS='-';set $anchor;echo $2)"
+    path="$(echo "$path" | grep "$filename")"
+}
+path="$([[ -n "$path" ]] && while IFS= read f; do
+   cat "$f" 2> /dev/null | head -1 | grep -q "#!" && echo "$f"
+done <<< "$path")"
+
+filenames="$([[ -n "$path" ]] && while IFS= read f; do
+   echo "${f##*/}"
+done <<< "$path")"
+
+[[ -z "$path" ]] && echo "ERROR: executable script with shebang not found" 1>&2 && exit 1
+
+count=$(echo "$path" | wc -l | tr -d ' ')
+[[ $count != 1 ]] && {
+    echo "ERROR: $count files" 1>&2 && echo "$filenames" 1>&2 && exit 1
+}
+
+chmod +x "$path" || exit
+"$path"
